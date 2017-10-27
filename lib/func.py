@@ -7,7 +7,8 @@
 import sys
 import urllib.request
 import crayons
-import urllib.parse
+import urllib
+
 
 
 # we assign functions to variables, to be used later
@@ -40,7 +41,7 @@ def display_message_in_color(message, status=WHITE):
 
 def check_if_url_is_valid(url):
 	try:
-		parsed = urllib.parse(url, allow_fragments=True)
+		parsed = urllib.parse.urlparse(url, allow_fragments=True)
 		if parsed.scheme != '' and parsed.netloc != '':
 			return True
 		else:
@@ -50,19 +51,25 @@ def check_if_url_is_valid(url):
 
 
 def analyze_headers(url):
+	# import pdb; pdb.set_trace()
 	# analyzes the http headers (https://www.owasp.org/index.php/OWASP_Secure_Headers_Project#tab=Headers)
-	server_response = urllib2.urlopen(url)
-	# check for headers and set them status
-	check_x_content_type_options(server_response.info())
+	try:
+		server_response = urllib.request.urlopen(url)
+	except urllib.error.URLError as err:
+		print("URL could not be found or is unreachable")
+		sys.exit(-1)
+	except urllib.error.HTTPError as err:
+		print(err.code, err.msg)
+		sys.exit(-2)
 
-def check_x_content_type_options(response_headers):
-	headers_dict = response_headers.dict
-	print(response_dict[X-Content-Type-Options])
+	for k, v in server_response.getheaders():
+		print("{0:45}{1}".format(k, v))
 
 def run():
-	print(sys.argv[1])
 	if validate_user_input() == True:
+		print(sys.argv[1])
+		print("-" * len(sys.argv[1]))
 		url = sys.argv[1]
 		analyze_headers(url)
 	else:
-		print("Not valid arguments")
+		print("Usage: {0} http://example.com".format(sys.argv[0]))
